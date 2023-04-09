@@ -1,0 +1,77 @@
+﻿@page "/employee"
+@page "/employee/{id:int}"
+@inject IEmployeeService EmployeeService
+@inject NavigationManager NavigationManager
+
+@if (Id == null)
+{
+	<PageTitle>Create new Employee</PageTitle>
+	<h3>Create new Employee</h3>
+}
+else
+{
+	<PageTitle>Edit @emplo.Nama</PageTitle>
+	<h3>Edit @emplo.Nama</h3>
+}
+
+<EditForm Model="emplo" OnSubmit="HandleSubmit">
+	<div>
+		<label for="nama">Nama</label>
+		<InputText id="nama" @bind-Value="emplo.Nama" class="form-control"></InputText>
+	</div>
+	<div>
+		<label for="alamat">Alamat</label>
+		<InputText id="alamat" @bind-Value="emplo.Alamat" class="form-control"></InputText>
+	</div>
+	<div>
+		<label for="gaji">Gaji</label>
+		<InputNumber id="gaji" @bind-Value="emplo.Gaji" class="form-control"></InputNumber>
+	</div>
+	<br />
+	<button type="submit" class="btn btn-primary">@btnText</button>
+	<button type="submit" class="btn btn-danger" @onclick="DeleteEmployee">Delete Employee</button>
+</EditForm>
+
+@code {
+	[Parameter]
+	public int? Id { get; set; }
+
+	Employee emplo = new Employee();
+
+	string btnText = string.Empty;
+
+	protected override async Task OnInitializedAsync()
+	{
+		btnText = Id == null ? "Save New Employee" : "Update Employee";
+	}
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if (Id == null)
+		{
+
+		}
+		else
+		{
+			emplo = await EmployeeService.GetEmployeeById((int)Id);
+		}
+	}
+
+	async Task HandleSubmit()
+	{
+		if (Id == null)
+		{
+			await EmployeeService.CreateEmployee(emplo);
+		}
+		else
+		{
+			await EmployeeService.UpdateEmployee(emplo);
+		}
+	}
+
+	async Task DeleteEmployee()
+	{
+		await EmployeeService.DeleteEmployee(emplo.Id);
+	}
+}

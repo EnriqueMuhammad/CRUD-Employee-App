@@ -1,0 +1,83 @@
+﻿@page "/employees"
+@inject IEmployeeService EmployeeService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Employees</PageTitle>
+<h3>List of Employees</h3>
+
+<DxGrid Data="@employees" EditModelSaving="OnEditModelSaving" DataItemDeleting="OnDataItemDeleting" ShowSearchBox="true" PageSize="5" KeyFieldName="Id">
+    <Columns>
+        <DxGridCommandColumn Width="150px"/>
+        <DxGridDataColumn FieldName="Id" Caption="Id" Width="100px" />
+        <DxGridDataColumn FieldName="Nama" Caption="Nama" />
+        <DxGridDataColumn FieldName="Alamat" Caption="Alamat" />
+        <DxGridDataColumn FieldName="Gaji" Caption="Gaji" />
+    </Columns>
+    <EditFormTemplate Context="editFormContext">
+        @{
+            var emplo = (Employee)editFormContext.EditModel;
+        }
+        <DxFormLayout>
+            <DxFormLayoutItem Caption="Nama">
+                <DxTextBox @bind-Text="@emplo.Nama" />
+            </DxFormLayoutItem>
+            <DxFormLayoutItem Caption="Alamat">
+                <DxTextBox @bind-Text="@emplo.Alamat" />
+            </DxFormLayoutItem>
+            <DxFormLayoutItem Caption="Gaji">
+                <InputNumber id="gaji" @bind-Value="@emplo.Gaji" class="form-control"></InputNumber>
+            </DxFormLayoutItem>
+            <DxFormLayoutItem ColSpanMd="12">
+                <ValidationSummary />
+            </DxFormLayoutItem>
+        </DxFormLayout>
+    </EditFormTemplate>
+</DxGrid>
+
+@code {
+    private List<Employee> employees = new List<Employee>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetEmployees();
+    }
+
+    async Task GetEmployees()
+    {
+        employees = await EmployeeService.GetEmployees();
+    }
+
+    async Task DeleteEmployee(Employee employee)
+    {
+        await EmployeeService.DeleteEmployee(employee.Id);
+        await GetEmployees();
+    }
+
+    async Task OnEditModelSaving (GridEditModelSavingEventArgs e)
+    {
+        var editModel = (Employee)e.EditModel;
+        var dataItem = e.IsNew ? new Employee() : await EmployeeService.GetEmployeeById(editModel.Id);
+        if(dataItem != null)
+        {
+            dataItem.Nama = editModel.Nama;
+            dataItem.Alamat = editModel.Alamat;
+            dataItem.Gaji = editModel.Gaji;
+            if (e.IsNew)
+            {
+                await EmployeeService.CreateEmployee(dataItem);
+            }
+            await EmployeeService.UpdateEmployee(dataItem);
+            await GetEmployees();
+        }
+    }
+
+    async Task OnDataItemDeleting(GridDataItemDeletingEventArgs e)
+    {
+        var dataItem = await EmployeeService.GetEmployeeById((e.DataItem as Employee).Id);
+        if(dataItem != null)
+        {
+            await EmployeeService.DeleteEmployee(dataItem.Id);
+            await GetEmployees();
+        }
+    }
+}
